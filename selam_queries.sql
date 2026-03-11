@@ -60,6 +60,16 @@ VALUES
 -- Question 5
 -- Insert payment for the rental
 
+-- first we create a new renta_id since we added a new customer. current rental_id= 16044
+
+INSERT INTO rental
+(rental_date, inventory_id, customer_id, return_date, staff_id)
+VALUES
+(CURRENT_TIMESTAMP, 5, 600, NULL, 1);
+
+--after inserting new rental  rental_id will automatically become:= 16045
+
 INSERT INTO payment
 (customer_id, staff_id, rental_id, amount, payment_date)
-VALUES (600,1,
+VALUES
+(600, 1, 16045, 4.99, CURRENT_TIMESTAMP);
