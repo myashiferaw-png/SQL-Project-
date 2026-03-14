@@ -1,35 +1,47 @@
+
+
 --1. Write the DDL to create a new temporary table called new_customer with appropriate fields
 --(first_name, last_name, email, address_id, active, etc.).
 
 SELECT *
 FROM customer;
+DROP TABLE IF EXISTS new_customers;
 
-DROP TABLE IF EXISTS new_customer;
+--The temporary tabel will only be active til PGADMIN is running. The first command is creating a 
+--temp tabel for the new customer tabel
+create temporary table new_customers (
+--the prent () inside will be all the names of the columns i will be creating
+--it will generat
 
-create temporary table new_customer (
 customer_id INT generated always as identity primary key,
 first_name varchar(100) not null,
 last_name varchar (100) not null,
 email varchar (100) not null,
 address_id int not null,
-active int not null,
+--true or false 
+active INT not null,
 create_date timestamp default current_timestamp);
 
+SELECT *
+FROM customer;
+
+
 --2. Insert a record for the new customer into the new_customer table.
-insert into new_customer(first_name, last_name, email,address_id,active)
-values ('mya', 'mayaye', 'myamyaye@gmail.com', 110, 1);
+insert into new_customers(first_name, last_name, email,address_id,active)
+VALUES ('mya', 'mayaye', 'myamyaye@gmail.com', 110, 1);
 
 select *
-from new_customer;
-
+from new_customers;
+select *
+from customer;
 
 --3. Insert the customer into the main customer table based on the record in new_customer.
 insert into customer (store_id, first_name, last_name, email, address_id, active)
 select 1,first_name, last_name, email,address_id,active
-from new_customer;
+from new_customers;
 
 select *
-from new_customer
+from customer
 order by customer_id desc;
 
 --4. Simulate a new rental:Insert a new record into the rental table for this customer, including rental date,
@@ -64,11 +76,13 @@ select *
 from payment 
 where customer_id =604;
 
+
 --6. Create a temporary table new_film with fields such as title, description, 
 --release_year, language_id, rental_duration, rental_rate, length, replacement_cost,
 --and rating.
-
-create temporary table new_film (
+-- since pg has a defualt answer for some of them we can skip them. 
+--smallint is another int data type but only smaller gbyte
+create temporary table films (
 title varchar (100) not null, 
 description varchar (100) not null, 
 release_year int not null, 
@@ -77,23 +91,24 @@ rental_duration int not null,
 length int not null);
 
 --7. Insert a record for the new film into new_film table.
+select *
+from film;
 
-insert into new_film (title, description, release_year, language_id, 
+insert into films (title, description, release_year, language_id, 
 rental_duration, length)
 values ('The sleeper Agent', 'Agent Mya must find the mole within the agency', 
 2026,1, 4, 140);
 
 select *
-from new_film
+from films
 where length = 140;
 
 select *
 from film
 order by film_id desc;
-
-
---8. Add inventory: insert 3 available copies of this new film into the inventory 
+--Add inventory: insert 3 available copies of this new film into the inventory 
 --table, assigning them to different store locations.
+
 select *
 from inventory;
 
@@ -108,10 +123,21 @@ order by length desc
 limit 10;
 
 --11. Find all customers who have rented more than 10 movies.
+
+select *
+from rental;
+
+select *
+from customer;
+
 select customer_id,
+--will count how many rows of rentals belong to a customer
 count (*) as total_rental
 from rental
+-- the number will be grouped by the customer id
 group by customer_id
+--where filters rows before grouping them
+--having filters groups after grouping 
 having  count (*) > 10;
 
 --12 Get the average rental rate for each movie rating (G, PG, R, etc.).
@@ -121,7 +147,8 @@ from film;
 
 select rating, avg(rental_rate) as avg_rental_rate
 from film 
-group by rating ;
+group by rating;
+
 --13. Find the top 5 cities with the most customers.
 
 select *
@@ -130,12 +157,15 @@ from city;
 select *
 from customer;
 
+--it will give us the number of customers in each city
+
 select ci.city, count (c.customer.id ) as total_customer
+--give it the first letter easy to rem
 from customer c 
 join address a on c.address_id=a.address_id
 join city ci on a. city_id= ci_city_id
 group by ci. city
-limit  5;
+limit 5;
 
 --13. Retrieve the 10 most rented films along with how many times each was rented.
 
@@ -148,14 +178,8 @@ from rental;
 select *
 from film;
 
-select t. title, count (r.rental_id) as total_rental
-from rental r
-join inventory i on r.inventory_id= i.inventory_id
-join film f on i.film_id=f.film_id
-group by t.title
-limit 10;
-
 --14. Find the customer who has spent the most in total payments.
+
 select c.customer_id, c.first_name, c.last_name, sum (p.amount) as total_amount
 from customer c
 join payment p on c.customer_id= p.customer_id
@@ -163,8 +187,14 @@ group by c.customer_id, c.first_name, c.last_name
 order by total_amount
 limit 2;
 
---15. List all movies that have never been rented.
+select t. title, count (r.rental_id) as total_rental
+from rental r
+join inventory i on r.inventory_id= i.inventory_id
+join film f on i.film_id=f.film_id
+group by t.title
+limit 10;
 
+--15. List all movies that have never been rented.
 select *
 from film;
 
@@ -174,8 +204,11 @@ from inventory;
 select *
 from rental; 
 
+
 select f.title, f.film
 from film f 
+--looking to see if each movie has any copy in the inventory
 left join inventory i on f.film_id = i.film_id
+--for each copy of movie we will look if it has been rented
 left join rental r on r.inventory_id = r.inventory_id
 where r.rental_id is null 
