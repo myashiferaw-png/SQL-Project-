@@ -130,12 +130,13 @@ from city;
 select *
 from customer;
 
-select ci.city, count (c.customer.id ) as total_customer
+
+select ci.city, count (c.customer_id ) as total_customer
 from customer c 
 join address a on c.address_id=a.address_id
-join city ci on a. city_id= ci_city_id
+join city ci on a. city_id= ci.city_id
 group by ci. city
-limit  5;
+limit 5;
 
 --13. Retrieve the 10 most rented films along with how many times each was rented.
 
@@ -148,11 +149,11 @@ from rental;
 select *
 from film;
 
-select t. title, count (r.rental_id) as total_rental
+select f. title, count (r.rental_id) as total_rental
 from rental r
 join inventory i on r.inventory_id= i.inventory_id
 join film f on i.film_id=f.film_id
-group by t.title
+group by f.title
 limit 10;
 
 --14. Find the customer who has spent the most in total payments.
@@ -174,8 +175,56 @@ from inventory;
 select *
 from rental; 
 
-select f.title, f.film
+select f.title, f.film_id
 from film f 
 left join inventory i on f.film_id = i.film_id
-left join rental r on r.inventory_id = r.inventory_id
-where r.rental_id is null 
+left join rental r on i.inventory_id = r.inventory_id
+where r.rental_id is null ;
+
+--Case Study 1: Customer Behavior Analysis
+--A marketing team wants to identify loyal customers to send special discount offers.
+--Write a query to find customers who rented more than 20 movies and spent more than $100 in total.
+--Return their full name, email, total rentals, and total amount paid.
+--Sort the results by the total amount spent, highest first.
+
+
+select *
+from payment;
+
+select *
+from customer;
+
+select *
+from rental; 
+
+select c.first_name, c.last_name, c.customer_id,
+count(r.rental_id) as total_rental, sum(p.amount) as rental_amount
+from customer c
+join rental r on c.customer_id  = r.customer_id
+join payment p on r.customer_id= p.customer_id
+group by c.first_name, c.last_name, c.customer_id
+having count (r.rental_id) >20 and sum(p.amount)  >100
+order by rental_amount desc;
+
+--The store manager wants to know which movies are underperforming and might be removed from inventory.
+--Find all films that have been rented fewer than 5 times.
+--Return the film title, rental count, and average rental rate for each.
+--Sort the result by rental count, lowest first, and limit to 20 films.
+
+select *
+from rental;
+
+select *
+from film;
+
+select *
+from inventory;
+
+select f.title, f.rental_rate, count (r.rental_id) as total_rental, avg (f.rental_rate) as average_rental
+from film f 
+join inventory i on f.film_id=i.film_id
+join rental r on i.inventory_id= r.inventory_id
+group by f.title, f.rental_rate
+having count(r.rental_id) <5
+order by total_rental
+limit 20;
