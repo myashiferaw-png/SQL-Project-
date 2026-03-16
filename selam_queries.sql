@@ -73,3 +73,48 @@ INSERT INTO payment
 (customer_id, staff_id, rental_id, amount, payment_date)
 VALUES
 (600, 1, 16045, 4.99, CURRENT_TIMESTAMP);
+
+
+-- Scenario 2: A new film is released and needs to be added to the system.
+-- 6. Create a temporary table new_film with fields such as title, description, release_year, language_id, rental_duration, rental_rate, length, replacement_cost, and rating.
+
+CREATE TEMP TABLE new_film (
+    film_id SERIAL PRIMARY KEY,
+    title VARCHAR(100),
+    description TEXT,
+    release_year INT,
+    language_id INT,
+    rental_duration INT,
+    rental_rate NUMERIC(4,2),
+    length INT,
+    replacement_cost NUMERIC(5,2),
+    rating VARCHAR(10)
+);
+
+-- note: We do not include film_id because:it is SERIAL SQL auto generates it.
+
+-- 7. Insert a record for the new film into new_film table.
+
+INSERT INTO new_film 
+(title, description, release_year, language_id, rental_duration, rental_rate, length, replacement_cost, rating)
+VALUES
+('Alex the analyst', 'A story about a YouTuber who helps future data analysts master SQL.', 2026, 1, 5, 4.99, 160, 19.99, 'PG-13');
+
+
+-- 8. Insert the new film into the main film table using the data from new_film.
+
+
+INSERT INTO film 
+(title, description, release_year, language_id, rental_duration, rental_rate, length, replacement_cost, rating)
+SELECT
+title, description, release_year, language_id, rental_duration, rental_rate, length, replacement_cost, rating
+FROM new_film;
+
+-- 9. Add inventory: insert 3 available copies of this new film into the inventory table, assigning them to different store locations.
+
+INSERT INTO inventory (film_id, store_id)
+VALUES
+((SELECT film_id FROM film WHERE title = 'Alex the Analyst'), 1),
+((SELECT film_id FROM film WHERE title = 'Alex the Analyst'), 2),
+((SELECT film_id FROM film WHERE title = 'Alex the Analyst'), 1);
+
