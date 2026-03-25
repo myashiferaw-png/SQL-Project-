@@ -1,12 +1,9 @@
--- DVD Rental Capstone Project
--- Author: Selam 
--- Branch: Selam
+--                                       DVD Rental Capstone Project
 
 -- Scenario 1
 -- Create temporary table for new customer
 
---  Write the DDL to create a new temporary table called new_customer 
--- with appropriate fields (first_name, last_name, email, address_id, active, etc.).
+-- Write the DDL to create a new temporary table called new_customer with appropriate fields (first_name, last_name, email, address_id, active, etc.).
 
 CREATE TABLE new_customer (
     customer_id INT,
@@ -186,3 +183,55 @@ ON f.film_id = i.film_id
 LEFT JOIN rental r
 ON i.inventory_id = r.inventory_id
 WHERE r.rental_id IS NULL;
+
+-- DQL Case Study Questions
+
+--  Write a query to find customers who rented more than 20 movies and spent more than $100 in total.
+-- tabless needed customer → rental → payment
+
+-- Return their full name, email, total rentals, and total amount paid.
+-- Sort the results by the total amount spent, highest first.
+
+SELECT 
+    c.first_name || ' ' || c.last_name AS full_name,
+    c.email,
+    COUNT(DISTINCT r.rental_id) AS total_rentals,
+    SUM(p.amount) AS total_spent
+FROM customer c
+JOIN rental r
+    ON c.customer_id = r.customer_id
+JOIN payment p
+    ON c.customer_id = p.customer_id
+GROUP BY 
+    c.customer_id, c.first_name, c.last_name, c.email
+HAVING 
+    COUNT(DISTINCT r.rental_id) > 20
+    AND SUM(p.amount) > 100
+    -- ther might be a customer with multiple rentals and
+    -- multiple payments, When we  join them together, SQL can create duplicate rows so we use DISTINCT to filter that out
+ORDER BY 
+    total_spent DESC;
+
+-- Case Study 2: Film Performance Review
+--  The store manager wants to know which movies are underperforming and might be removed from inventory.
+-- Find all films that have been rented fewer than 5 times.
+-- Return the film title, rental count, and average rental rate for each.
+-- Sort the result by rental count, lowest first, and limit to 20 films.
+
+
+SELECT 
+    f.title,
+    COUNT(r.rental_id) AS rental_count,
+    AVG(f.rental_rate) AS avg_rental_rate
+FROM film f
+LEFT JOIN inventory i
+    ON f.film_id = i.film_id
+LEFT JOIN rental r
+    ON i.inventory_id = r.inventory_id
+GROUP BY 
+    f.film_id, f.title
+HAVING 
+    COUNT(r.rental_id) < 5
+ORDER BY 
+    rental_count ASC
+LIMIT 20;
